@@ -1,0 +1,202 @@
+<head>
+<title>IT Computer Education :: Online Attendance System</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="HandheldFriendly" content="true">
+
+</head>
+
+<div >
+<img src="homepagelogo_small.png" width=100% >
+<!--<span style="color:#00008B;font-family:Aero;font-size:36px;"><strong><em>IT Computer Education<br></em></strong></span><span style="color:#008000;font-family:Arial;font-size:18px;">Online Attendance Management System</span>-->
+</br>
+<span style="color:#008000;font-family:Arial;font-size:16px;">( Online Attendance Management System )</span>
+</div>
+
+</br>
+<form id="Form" action="" method="post">
+  <input id="here" maxlength="16" name="code" placeholder="scan..." type="password" tabindex="1" required autofocus>
+  <input id="subHere" type="submit">
+</form>
+
+<script>
+  $('#here').keyup(function(){
+    if(this.value.length ==16){
+    $('#subHere').click();
+    }
+  });
+</script>
+
+<div id="clockboxdate" style="font:18pt Arial; color:blue;"></div>
+<div id="clockboxtime" style="font:40pt Arial; color:darkblue;"></div>
+
+
+<script type="text/javascript">
+var tday=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+var tmonth=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sept","Oct","Nov","Dec"];
+
+function GetClock(){
+var d=new Date();
+var nday=d.getDay(),nmonth=d.getMonth(),ndate=d.getDate(),nyear=d.getFullYear();
+var nhour=d.getHours(),nmin=d.getMinutes(),nsec=d.getSeconds(),ap;
+
+if(nhour==0){ap=" AM";nhour=12;}
+else if(nhour<12){ap=" AM";}
+else if(nhour==12){ap=" PM";}
+else if(nhour>12){ap=" PM";nhour-=12;}
+
+if(nmin<=9) nmin="0"+nmin;
+if(nsec<=9) nsec="0"+nsec;
+
+var datetext=""+tday[nday]+", "+tmonth[nmonth]+" "+ndate+", "+nyear+" ";
+var timetext=""+nhour+":"+nmin+":"+nsec+ap+"";
+document.getElementById('clockboxdate').innerHTML=datetext;
+document.getElementById('clockboxtime').innerHTML=timetext;
+}
+
+GetClock();
+setInterval(GetClock,1000);
+</script>
+
+<?php
+
+$hostname=gethostbyaddr($_SERVER['REMOTE_ADDR']);
+echo '<hr /><font color="black" face="Verdana" ><strong>Public IP :  </strong></font> <font color="red" face="Verdana" ><strong>'.$hostname.'</strong></font>';
+
+include 'db_connection.php';
+
+		//echo "The time in " . date_default_timezone_get() . " is " . date("r");
+		date_default_timezone_set("Asia/Calcutta");
+		//echo "The time in " . date_default_timezone_get() . " is " . date("H:i:s");
+
+if (!empty($_POST['code']) and $_POST['code'] != '' )
+{				
+		$lastpunch = $_POST['code'] ;
+
+		//echo "Last Punch   >>  ".$studentcode ;
+
+		$result = mysqli_query($conn,"SELECT * FROM `student_attendance_master` where `icard_id` = '$lastpunch'");
+		//$result = mysqli_query($conn,"SELECT * FROM `student` where `stdname` = '$studentcode' and `status` = '0' "); //students who are passed out
+
+		if (mysqli_num_rows($result) > 0) 
+		{
+			//echo '</br><font color="green"> Verified Successfully...</font>';
+			$row = mysqli_fetch_array($result);
+				
+			$image = $row["feedescription"];
+			$studentname = $row["sname"];
+			$studentid = $row["stdname"];
+			$city = $row["city"];
+			
+			$tcid = $row["tcid"];
+			$stdid = $row["stdid"];
+			
+			//echo '</br><font color="green">Welcome :</font>'.'<b>'.$studentname.'</b>' ;
+			echo '<hr /><font color="black" face="Verdana" ><strong>Welcome :  </strong></font> <font color="green" face="Verdana" ><strong>'.$studentname.'</strong></font>';
+			echo '</br> <font color="black" face="Verdana" ><strong>ID :  </strong></font><font color="green" face="Verdana" ><strong>'.$studentid.'</strong></font><font color="black" face="Verdana" ><strong>  City : </strong></font><font color="green" face="Verdana" ><strong>'.$city.'</strong></font>';
+			
+			//echo '</br><font color="green">ID :</font>'.'<b>'.$studentid.'</b>' ;
+			//echo '<font color="green">  City :</font>'.'<b>'.$city.'</b>' ;
+			echo '<hr /> <img border="2" src="../images/student_photo/'.$image.'">';
+			//echo '</br> <audio style="display:none" controls autoplay> <source src="sound/thankufemale.mp3" type="audio/mpeg"> </audio>'	 ;
+
+			
+			
+			//**************** if user punch the attendance again*****************************
+			
+			$result_last_record = mysqli_query($conn,"select `timestamp` from `attendance_details` where `stdid` = '$stdid' ORDER BY `id` DESC LIMIT 1");
+			//$result_last_record = mysqli_query($conn,"select `stdid`, `timestamp` from `attendance_details` where `tcid` = '$tcid' ORDER BY `id` DESC LIMIT 1");
+			$row_last_record = mysqli_fetch_array($result_last_record);
+			
+			
+			//******************
+								
+			$timestamp_last_record = $row_last_record["timestamp"];
+			$timestamp_last_record_formatted = date('h:i:s a d/m/Y', strtotime($timestamp_last_record));  // to display more readable date and time
+			
+			$timestamp_last_record_only_date = date('d', strtotime($timestamp_last_record));  // to extract date from last punched attendance
+
+			$diffdate = date("d") - $timestamp_last_record_only_date ;
+			
+			$diffsecond = strtotime("now") - strtotime($timestamp_last_record);
+			
+			if ( $diffsecond <= 300 )   // if user punch the attendance again within <= seconds 300 second = 5 minutes
+			{
+            echo '<body bgcolor="LIGHTGREY">';
+			echo '</br><hr /> <font color="red" face="Verdana" ><strong> Already Verified...</strong></font>';
+			echo '<hr /><font color="black" face="Verdana" ><strong>Last Punched at :  </strong></font> <font color="red" face="Verdana" ><strong>'.$timestamp_last_record_formatted	
+				.'</strong></font>';
+			echo '<hr /> <audio controls autoplay> <source src="sound/already_verified.mp3" type="audio/mpeg"> </audio>' ;  
+			} 
+
+			else
+			{
+
+				if ( $diffdate > 2)//after 60 hrs
+				{
+				//echo '<body bgcolor="DEEPPINK">';  //
+				echo '<body bgcolor="TOMATO">';
+				echo '</br><hr /> <font color="red" face="Verdana" ><strong> You were absent for more than 2 days, fill the leave application at reception</strong></font>';
+				echo '<hr /><font color="black" face="Verdana" ><strong>Last Punched at :  </strong></font> <font color="red" face="Verdana" ><strong>'.
+				$timestamp_last_record_formatted	
+				.'</strong></font>';
+				echo '<hr /> <audio controls autoplay> <source src="sound/absent-more-than-1-day.mp3" type="audio/mpeg"> </audio>' ;
+				}
+						// if user punch the attendance after a day that is he or she is absent last day
+						elseif ( $diffdate == 2 and date("l") != 'Monday')//dealing Sunday
+						{
+						//echo '<body bgcolor="HOTPINK">';
+						echo '<body bgcolor="HOTPINK">';  // LIGHTORANGE  #FF7043  
+						echo '</br><hr /> <font color="red" face="Verdana" ><strong> You were absent yesterday, tell the reason at reception</strong></font>';
+						echo '<hr /><font color="black" face="Verdana" ><strong>Last Punched at :  </strong></font> <font color="red" face="Verdana" ><strong>'.
+						$timestamp_last_record_formatted .'</strong></font>';
+						echo '<hr /> <audio controls autoplay> <source src="sound/absent-yesterday.mp3" type="audio/mpeg"> </audio>' ;
+						}
+						else
+						{
+						echo '<hr /> <audio controls autoplay> <source src="sound/thankyou_raveena.mp3" type="audio/mpeg"> </audio>' ;
+						}
+			
+		$currenttime = date("Y-m-d H:i:s");  // Just before attendence has been inserted
+			$sql = "INSERT INTO attendance_details (tcid, stdid,`type`, longitude, latitude, public_ip, timestamp) VALUES ('$tcid', '$stdid', 'in', '1','1','$hostname', '$currenttime')";
+		$currenttime = date("h:i:s a d/m/Y");	//  Just after attendence has been inserted
+			if (mysqli_query($conn, $sql)) 
+			{
+			//echo "Attendance recorded successfully";
+			echo '<body bgcolor="YELLOWGREEN">';
+			echo '<hr /> <font color="green" face="Verdana" ><strong> Attendance Recorded Successfully...@ '.$currenttime.'</strong></font>';
+			} 
+			else 
+			{
+			echo '</br>' ."Error: ". mysqli_error($conn);
+			}
+			
+
+			}//**************** if user punch the attendance again
+			
+		}
+		
+		else
+		
+		{
+		    //echo '<body bgcolor="pink">';  
+			echo '<body bgcolor="LIGHTPINK">';
+		    echo '<hr /> <font color="red" face="Verdana" ><strong> Please verify again..!</strong></font>';
+		    //echo '</br> <audio controls autoplay> <source src="sound/pleaseverifyagain_aditi.mp3" type="audio/mpeg"> </audio>' ;
+		    //echo '</br> <audio controls autoplay> <source src="sound/please_verify_again.mp3" type="audio/mpeg"> </audio>' ;
+		    echo '<hr /> <audio controls autoplay> <source src="sound/pleaseverifyagain_raveena.mp3" type="audio/mpeg"> </audio>' ;
+		    
+		}
+
+}
+else
+{
+echo '</br><hr /> <font color="red" face="Verdana" ><strong> Please Punch the Attendance...</strong></font>';
+//echo "Please Punch the Attendance..." ;
+//echo '</br> <audio controls autoplay> <source src="sound/ttsMP3.com_VoiceText_2019-12-4_23_47_13-welcometoitcomputereducation.mp3" type="audio/mpeg"> </audio>' ;
+//echo '</br> <audio controls autoplay> <source src="sound/welcometoitcomputereducation.mp3" type="audio/mpeg"> </audio>' ;
+}
+
+mysqli_close($conn);
+exit;
+?>
